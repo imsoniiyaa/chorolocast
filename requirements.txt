@@ -1,0 +1,9 @@
+# Pins matter here. Verified against what pip resolved on an Intel Mac (torch 2.2.2 is the last torch with an x86_64 Mac wheel).
+numpy<2                     # torch 2.2.x is built against numpy 1.x
+pandas
+scipy
+torch                       # pip picks 2.2.2 on Intel Mac, newer on Apple Silicon / Linux / Windows
+transformers>=4.41,<5       # transformers 5 needs torch>=2.4, which Intel Macs cannot install
+huggingface_hub<1           # transformers 4.x requires hub < 1.0
+chronos-forecasting>=2.0
+timesfm[torch]==2.0.2       # PyPI 2.0.x still exposes the TimesFM 2.5 model class; 3.0.x changes the model/API and its weights are non-commercial
