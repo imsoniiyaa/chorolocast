@@ -371,8 +371,8 @@ cmd_forecast <- function(a) {
   df <- to_vera(S, ref, model_id, a$site, a$depth, a$target)
   stopifnot(!anyNA(df$prediction), all(df$prediction >= 0))
   dir.create(a$out, showWarnings = FALSE, recursive = TRUE)
-  f <- file.path(a$out, sprintf("daily-%s-%s.csv.gz", ref, model_id))
-  con <- gzfile(f, "w"); write.csv(df, con, row.names = FALSE, quote = FALSE); close(con)
+  f <- file.path(a$out, sprintf("daily-%s-%s.csv", ref, model_id))
+  write.csv(df, f, row.names = FALSE, quote = FALSE)
   cat(sprintf("wrote %s (%d rows); context ends %s (lag %dd); load %.1fs, forecast %.2fs\n",
               f, nrow(df), last, lag, load_s, as.numeric(difftime(Sys.time(), t0, units = "secs"))))
 }
