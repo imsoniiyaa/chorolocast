@@ -1,8 +1,7 @@
 # set the value
 HORIZON  <- 35L
 LEVELS   <- seq(0.1, 0.9, by = 0.1)      
-Z90      <- qnorm(0.9)
-BLOOM    <- 20                          
+Z90      <- qnorm(0.9)                      
 VARIABLE <- "Chla_ugL_mean"
 
 # find the path to the python backend
@@ -262,7 +261,7 @@ score_forecasts <- function(Q, Y, log, scale = NULL, n = 199) {
                             width95 = ci[2, hh] - ci[1, hh])
   }
   d <- do.call(rbind, rows)
-  d$abs_err <- abs(d$y - d$med); d$sq_err <- (d$y - d$med)^2; d$bloom <- d$y >= BLOOM
+  d$abs_err <- abs(d$y - d$med); d$sq_err <- (d$y - d$med)^2
   d
 }
 # additional summary functions for the forecast scores, by horizon or overall
@@ -273,11 +272,8 @@ summarise_h <- function(d) {
 }
 # summarize the forecast scores overall, including separate metrics for bloom events
 summarise_all <- function(d) {
-  b <- d[d$bloom, ]
   data.frame(n = nrow(d), MAE = mean(d$abs_err), RMSE = sqrt(mean(d$sq_err)), CRPS = mean(d$crps),
-             coverage95 = mean(d$cover95), width95 = mean(d$width95), bloom_n = nrow(b),
-             bloom_MAE = if (nrow(b)) mean(b$abs_err) else NA_real_,
-             bloom_CRPS = if (nrow(b)) mean(b$crps) else NA_real_)
+             coverage95 = mean(d$cover95), width95 = mean(d$width95))
 }
 
 # collect the contexts and actual values for a set of forecast origins, using a given backend
@@ -366,12 +362,12 @@ cmd_forecast <- function(a) {
     sc <- c(cal$scale, rep(tail(cal$scale, 1), max(0, total - nrow(cal))))
     s <- apply_scale(s, sc[seq_len(total)])
   }
-  S <- inv(s, log)[, lag + seq_len(HORIZON), drop = FALSE]     # ref+1 ... ref+35
+  S <- inv(s, log)[, lag + seq_len(HORIZON), drop = FALSE]    
   model_id <- if (!is.null(a$model_id)) a$model_id else paste0("chlorocast_", a$model)
   df <- to_vera(S, ref, model_id, a$site, a$depth, a$target)
   stopifnot(!anyNA(df$prediction), all(df$prediction >= 0))
   dir.create(a$out, showWarnings = FALSE, recursive = TRUE)
-  f <- file.path(a$out, sprintf("daily-%s-%s.csv", ref, model_id))
+  f <- file.path(a$out, sprintf("%s.csv", ref, model_id))
   write.csv(df, f, row.names = FALSE, quote = FALSE)
   cat(sprintf("wrote %s (%d rows); context ends %s (lag %dd); load %.1fs, forecast %.2fs\n",
               f, nrow(df), last, lag, load_s, as.numeric(difftime(Sys.time(), t0, units = "secs"))))

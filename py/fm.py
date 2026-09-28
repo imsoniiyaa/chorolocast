@@ -14,7 +14,6 @@ HORIZON = 35
 LEVELS = np.round(np.arange(1, 10) / 10, 1)
 MED = 4
 VARIABLE = "Chla_ugL_mean"
-BLOOM = 20.0
 Z90 = norm.ppf(0.9)
 
 #get the data(cleaned earlier) and load it into a pandas dataframe. 
@@ -145,7 +144,6 @@ def score_forecasts(Q, Y_raw, log, scale=None, n=199):
     d = pd.DataFrame(rows, columns=["origin", "h", "y", "med", "crps", "cover95", "width95"])
     d["abs_err"] = (d["y"] - d["med"]).abs()
     d["sq_err"] = (d["y"] - d["med"]) ** 2
-    d["bloom"] = d["y"] >= BLOOM
     return d
 
 #summarize the results by horizon or overall. 
@@ -154,12 +152,8 @@ def summarise(d, by_h=True):
     g = d.groupby("h") if by_h else d.assign(all=1).groupby("all")
     out = g.agg(n=("y", "size"), MAE=("abs_err", "mean"), RMSE=("sq_err", lambda v: np.sqrt(v.mean())),
                 CRPS=("crps", "mean"), coverage95=("cover95", "mean"), width95=("width95", "mean"))
-    if not by_h:
-        b = d[d["bloom"]]
-        out["bloom_n"] = len(b)
-        out["bloom_MAE"] = b["abs_err"].mean() if len(b) else np.nan
-        out["bloom_CRPS"] = b["crps"].mean() if len(b) else np.nan
-    return out.reset_index(drop=True if not by_h else False)
+    out = out.reset_index(drop=not by_h)
+    return out
 
 
 #collect the context and the actual values for the origins.
