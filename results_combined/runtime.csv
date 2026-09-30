@@ -1,7 +1,0 @@
-"model","load_s","per_35day_forecast_s"
-"persistence",0,0.003
-"arima",0.54,0.015
-"rf",0.33,4.133
-"xgboost",0.08,4.316
-"chronos",6.42,0.101
-"timesfm",5.57,0.15
