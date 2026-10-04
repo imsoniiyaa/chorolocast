@@ -18,6 +18,7 @@ quantiles_to_samples <- function(q, n) {
     }
     out
 }
+
 # compute the CRPS for an ensemble of samples and a vector of observations
 apply_scale <- function(samples, scale) {
     med <- apply(samples, 2, median)
@@ -25,7 +26,8 @@ apply_scale <- function(samples, scale) {
     sweep(sweep(sweep(samples, 2, med, "-"), 2, scale, "*"), 2, med, "+")
 }
 
-fit_scale <- function(Q, Y, n = 199, cover = 0.95, smooth = 5) {
+fit_scale <- function(Q, Y, n = 199, cover = 0.95, smooth = 5,
+                      mode = Sys.getenv("CAL_MODE", "global")) {
     O <- dim(Q)[1]
     H <- dim(Q)[2]
     scores <- matrix(NA_real_, O, H)
@@ -35,6 +37,32 @@ fit_scale <- function(Q, Y, n = 199, cover = 0.95, smooth = 5) {
         ci <- apply(s, 2, quantile, probs = c(0.025, 0.975), names = FALSE)
         scores[o, ] <- abs(Y[o, ] - med) / pmax((ci[2, ] - ci[1, ]) / 2, 1e-6)
     }
+
+    clamp <- function(v) pmin(pmax(v, 0.25), 6)
+    all_v <- scores[!is.na(scores)]
+    if (length(all_v) < 10) {
+        return(rep(1, H))
+    }
+
+    if (mode == "global") {
+        return(rep(clamp(unname(quantile(all_v, cover))), H))
+    }
+
+    if (mode == "linear") {
+        cs <- vapply(seq_len(H), function(h) {
+            v <- scores[, max(1, h - 3):min(H, h + 3)]
+            v <- v[!is.na(v)]
+            if (length(v) >= 10) unname(quantile(v, cover)) else NA_real_
+        }, numeric(1))
+        ok <- !is.na(cs)
+        if (sum(ok) < 3) {
+            return(rep(clamp(unname(quantile(all_v, cover))), H))
+        }
+        fit <- lm(cs[ok] ~ which(ok))
+        return(clamp(unname(coef(fit)[1] + coef(fit)[2] * seq_len(H))))
+    }
+
+    # per_h
     cs <- vapply(seq_len(H), function(h) {
         v <- scores[, h]
         v <- v[!is.na(v)]
@@ -47,5 +75,5 @@ fit_scale <- function(Q, Y, n = 199, cover = 0.95, smooth = 5) {
     if (sum(ok) == 1) cs <- rep(cs[ok], H) else cs <- approx(which(ok), cs[ok], xout = seq_len(H), rule = 2)$y
     half <- smooth %/% 2
     cs <- vapply(seq_len(H), function(h) median(cs[max(1, h - half):min(H, h + half)]), numeric(1))
-    pmin(pmax(cs, 0.25), 6)
+    clamp(cs)
 }

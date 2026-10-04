@@ -1,35 +1,76 @@
-LAGS <- c(1, 2, 3, 5, 7, 10, 14, 21, 28, 35, 49, 63, 90)
+LAGS <- c(1:7, 14, 30, 60, 90, 180, 365)
 ROLL <- c(7, 14, 30)
 
-# build a lag table for a given time series, with specified lags and rolling windows
-build_lag_table <- function(x, lags = LAGS, roll = ROLL) {
+if (!exists("LEVELS")) LEVELS <- seq(0.1, 0.9, by = 0.1)
+if (!exists("Z90")) Z90 <- qnorm(0.9)
+
+build_lag_table <- function(
+  x,
+  do = NULL,
+  dosat = NULL,
+  temp = NULL,
+  airtemp = NULL,
+  lags = LAGS,
+  roll = ROLL
+) {
     n <- length(x)
-    maxlag <- max(lags, roll)
+    maxlag <- max(c(lags, roll))
     idx <- (maxlag + 1):(n - 1)
     if (length(idx) < 60) {
         return(NULL)
     }
-    feats <- lapply(lags, function(L) x[idx - L])
+    feats <- lapply(lags, function(L) x[idx + 1 - L])
     names(feats) <- paste0("lag", lags)
     for (w in roll) {
         feats[[paste0("ma", w)]] <- vapply(idx, function(t) mean(x[(t - w + 1):t]), numeric(1))
         feats[[paste0("sd", w)]] <- vapply(idx, function(t) sd(x[(t - w + 1):t]), numeric(1))
     }
+    if (!is.null(do)) {
+        feats$DO <- do[idx]
+    }
+
+    if (!is.null(dosat)) {
+        feats$DOsat <- dosat[idx]
+    }
+
+    if (!is.null(temp)) {
+        feats$Temp <- temp[idx]
+    }
+
+    if (!is.null(airtemp)) {
+        feats$AirTemp <- airtemp[idx]
+    }
     df <- as.data.frame(feats)
     df$y <- x[idx + 1]
     df
 }
-# compute the lagged features for a single row (the last row of a time series)
-lag_state <- function(x, lags = LAGS, roll = ROLL) {
-    n <- length(x)
-    row <- as.list(setNames(x[n - lags + 1], paste0("lag", lags)))
+
+# mat의 각 행(path)에서 마지막 시점 기준 feature를 한 번에 계산
+lag_state_mat <- function(
+  mat,
+  do_last,
+  dosat_last,
+  temp_last,
+  airtemp_last,
+  lags = LAGS,
+  roll = ROLL
+) {
+    n <- ncol(mat)
+    out <- lapply(lags, function(L) mat[, n - L + 1])
+    names(out) <- paste0("lag", lags)
     for (w in roll) {
-        row[[paste0("ma", w)]] <- mean(x[(n - w + 1):n])
-        row[[paste0("sd", w)]] <- sd(x[(n - w + 1):n])
+        win <- mat[, (n - w + 1):n, drop = FALSE]
+        out[[paste0("ma", w)]] <- rowMeans(win)
+        out[[paste0("sd", w)]] <- apply(win, 1, sd)
     }
-    as.data.frame(row)
+    out$DO <- rep(do_last, nrow(mat))
+    out$DOsat <- rep(dosat_last, nrow(mat))
+    out$Temp <- rep(temp_last, nrow(mat))
+    out$AirTemp <- rep(airtemp_last, nrow(mat))
+
+    as.data.frame(out)
 }
-# sample from a matrix of quantiles, using linear interpolation for the inner quantiles and normal approximation for the tails
+
 sample_row_quantiles <- function(Q, u) {
     n <- nrow(Q)
     out <- numeric(n)
@@ -41,49 +82,93 @@ sample_row_quantiles <- function(Q, u) {
     if (any(inner)) {
         out[inner] <- vapply(
             which(inner),
-            function(i) approx(LEVELS, Q[i, ], xout = u[i], rule = 2)$y, numeric(1)
+            function(i) approx(LEVELS, Q[i, ], xout = u[i], rule = 2)$y,
+            numeric(1)
         )
     }
     out[lo] <- Q[lo, 1] + s_lo[lo] * (qnorm(u[lo]) - qnorm(0.1))
     out[hi] <- Q[hi, 9] + s_hi[hi] * (qnorm(u[hi]) - qnorm(0.9))
     out
 }
-# simulate multiple paths from a fitted model, using the lagged features and the step function
-simulate_paths <- function(x0, step_fn, horizon, n) {
+
+simulate_paths <- function(
+  x0,
+  step_fn,
+  horizon,
+  n,
+  do_last,
+  dosat_last,
+  temp_last,
+  airtemp_last
+) {
     mat <- matrix(rep(x0, n), nrow = n, byrow = TRUE)
     out <- matrix(NA_real_, n, horizon)
     u_grid <- (seq_len(n) - 0.5) / n
     for (h in seq_len(horizon)) {
-        state <- do.call(rbind, lapply(seq_len(n), function(i) lag_state(mat[i, ])))
+        state <- lag_state_mat(
+            mat,
+            do_last,
+            dosat_last,
+            temp_last,
+            airtemp_last
+        )
         Q <- step_fn(state)
         out[, h] <- sample_row_quantiles(Q, sample(u_grid))
         mat <- cbind(mat, out[, h])
     }
     out
 }
-# fit a lagged model and return a function that predicts the next value given the lagged features
+
 backend_lagmodel <- function(name, fit_and_predict) {
-    list(name = name, predict = function(ctxs, horizon) {
-        out <- array(NA_real_, c(length(ctxs), horizon, 9))
-        for (i in seq_along(ctxs)) {
-            x <- ctxs[[i]]
-            tab <- build_lag_table(x)
-            if (is.null(tab)) {
-                out[i, , ] <- x[length(x)]
-                next
+    list(
+        name = name,
+        predict = function(ctxs, horizon) {
+            out <- array(NA_real_, c(length(ctxs), horizon, 9))
+            for (i in seq_along(ctxs)) {
+                ctx <- ctxs[[i]]
+                x <- ctx$y
+                tab <- build_lag_table(
+                    x,
+                    do = ctx$do,
+                    dosat = ctx$dosat,
+                    temp = ctx$temp,
+                    airtemp = ctx$airtemp
+                )
+                if (is.null(tab)) {
+                    out[i, , ] <- x[length(x)]
+                    next
+                }
+                step_fn <- fit_and_predict(tab)
+                paths <- simulate_paths(
+                    x,
+                    step_fn,
+                    horizon,
+                    199,
+                    tail(ctx$do, 1),
+                    tail(ctx$dosat, 1),
+                    tail(ctx$temp, 1),
+                    tail(ctx$airtemp, 1)
+                )
+                out[i, , ] <- t(apply(paths, 2, quantile, probs = LEVELS, names = FALSE))
             }
-            step_fn <- fit_and_predict(tab)
-            paths <- simulate_paths(x, step_fn, horizon, 199)
-            out[i, , ] <- t(apply(paths, 2, quantile, probs = LEVELS, names = FALSE))
+            out
         }
-        out
-    })
+    )
 }
-# random forest backend: fit a random forest to the lagged features and predict the next value
+
 backend_rf <- function() {
     if (!requireNamespace("ranger", quietly = TRUE)) stop("install.packages('ranger')")
+    seed <- as.integer(Sys.getenv("SEED", "42"))
     backend_lagmodel("rf", function(tab) {
-        fit <- ranger::ranger(y ~ ., data = tab, quantreg = TRUE, num.trees = 200)
-        function(newdata) predict(fit, data = newdata, type = "quantiles", quantiles = LEVELS)$predictions
+        fit <- ranger::ranger(
+            y ~ .,
+            data = tab,
+            quantreg = TRUE,
+            num.trees = 500,
+            seed = seed
+        )
+        function(newdata) {
+            predict(fit, data = newdata, type = "quantiles", quantiles = LEVELS)$predictions
+        }
     })
 }

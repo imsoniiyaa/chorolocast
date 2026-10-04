@@ -54,6 +54,7 @@ cmd_evaluate <- function(a) {
             variants <- if (sp == "val") list(raw = NULL) else list(raw = NULL, calibrated = scale)
             for (tag in names(variants)) {
                 d <- score_forecasts(res[[sp]]$Q, res[[sp]]$Y, log, variants[[tag]], a$members)
+                write.csv(d, file.path(a$out, sprintf("scores_%s_%s_%s.csv", name, sp, tag)), row.names = FALSE)
                 key <- paste(name, sp, tag)
                 by_h[[key]] <- cbind(model = name, split = sp, variant = tag, summarise_h(d))
                 overall[[key]] <- cbind(model = name, split = sp, variant = tag, summarise_all(d))

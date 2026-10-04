@@ -39,7 +39,7 @@ backend_python <- function(model, ctx_len) {
         predict = function(ctxs, horizon) {
             flat <- m$predict_flat(
                 b,
-                lapply(ctxs, as.numeric),
+                lapply(ctxs, function(cx) as.numeric(if (is.list(cx)) cx$y else cx)),
                 as.integer(horizon)
             )
 
