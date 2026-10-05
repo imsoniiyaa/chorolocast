@@ -12,6 +12,7 @@ source("R/models/rf_direct.R")
 source("R/models/xgboost.R") # depends on rf.R being sourced first
 source("R/models/chronos.R")
 source("R/models/timesfm.R")
+source("R/models/rf_tfm_resid.R")
 
 HORIZON <- 35L
 LEVELS <- seq(0.1, 0.9, by = 0.1)
@@ -28,6 +29,7 @@ get_backend <- function(name, ctx_len) {
     xgboost = backend_xgboost(),
     chronos = backend_chronos(ctx_len),
     timesfm = backend_timesfm(ctx_len),
+    rf_tfm_resid = backend_rf_tfm_resid(),
     ens = {
       w <- as.numeric(Sys.getenv("ENS_W", "0.7"))
       backend_ensemble(backend_timesfm(ctx_len), backend_rf(), w)
