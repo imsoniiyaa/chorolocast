@@ -1,8 +1,8 @@
 library(ggplot2)
 
 df <- data.frame(
-    Model = c("Persistence", "ARIMA", "Random Forest", "TimesFM", "Chronos", "Ensemble (ens3)"),
-    CRPS = c(10.271, 8.941, 10.936, 7.942, 8.679, 7.853)
+    Model = c("ARIMA", "Random Forest", "TimesFM", "Chronos", "Ensemble (ens3)"),
+    CRPS = c(8.941, 10.936, 7.942, 8.679, 7.853)
 )
 
 
@@ -14,7 +14,6 @@ ggplot(df, aes(x = CRPS, y = Model, fill = Model)) +
         hjust = -0.2, size = 4, fontface = "bold"
     ) +
     scale_fill_manual(values = c(
-        "Persistence"     = "#b0b0b0",
         "ARIMA"           = "#5B8DB8",
         "Random Forest"   = "#5B8DB8",
         "TimesFM"         = "#1B4F8A",

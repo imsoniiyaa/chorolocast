@@ -1,0 +1,55 @@
+name: Daily Forecast
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 매일 자정 UTC
+  workflow_dispatch:
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install R packages
+        run: |
+          Rscript -e "install.packages(c('forecast', 'ranger', 'tidyverse', 'reticulate'), repos='https://cran.rstudio.com/')"
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Python packages
+        run: |
+          pip install timesfm torch
+
+      - name: Cache TimesFM model
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/huggingface
+          key: timesfm-model-v1
+
+      - name: Update data from VERA
+        run: |
+          Rscript R/update_data.R
+
+      - name: Run forecast
+        run: |
+          Rscript R/fm.R forecast \
+            --data chla_daily.csv \
+            --model ens3 \
+            --out forecasts
+
+      - name: Commit and push
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Actions"
+          git add chla_daily.csv forecasts/
+          git commit -m "auto forecast $(date +'%Y-%m-%d')" || echo "No changes"
+          git push
