@@ -1,0 +1,10 @@
+name: shiny_app
+title:
+username: chorolocast
+account: chorolocast
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 18401954
+bundleId: 12800098
+url: https://chorolocast.shinyapps.io/shiny_app/
+version: 1
