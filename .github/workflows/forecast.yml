@@ -18,7 +18,8 @@ jobs:
 
       - name: Install R packages
         run: |
-          Rscript -e "install.packages(c('forecast', 'ranger', 'tidyverse', 'reticulate', 'readr', 'dplyr'), repos='https://cran.rstudio.com/')"
+          Rscript -e "install.packages(c('forecast', 'ranger', 'reticulate', 'readr', 'dplyr', 'tidyr', 'httr', 'jsonlite'), repos='https://cran.rstudio.com/')"
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
