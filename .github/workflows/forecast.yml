@@ -2,7 +2,7 @@ name: Daily Forecast
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 매일 자정 UTC
+    - cron: "0 0 * * *" # 매일 자정 UTC
   workflow_dispatch:
 
 jobs:
@@ -18,12 +18,11 @@ jobs:
 
       - name: Install R packages
         run: |
-          Rscript -e "install.packages(c('forecast', 'ranger', 'tidyverse', 'reticulate'), repos='https://cran.rstudio.com/')"
-
+          Rscript -e "install.packages(c('forecast', 'ranger', 'tidyverse', 'reticulate', 'readr', 'dplyr'), repos='https://cran.rstudio.com/')"
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install Python packages
         run: |
