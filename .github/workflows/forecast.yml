@@ -35,7 +35,6 @@ jobs:
           Rscript -e "install.packages('png', repos='https://cran.rstudio.com/')"
           Rscript -e "install.packages('reticulate', repos='https://cran.rstudio.com/')"
           Rscript -e "install.packages(c('forecast', 'ranger', 'readr', 'dplyr', 'tidyr', 'httr', 'jsonlite'), repos='https://cran.rstudio.com/')"
-          Rscript -e "reticulate::use_python(Sys.which('python3'))"
 
       - name: Cache TimesFM model
         uses: actions/cache@v3
@@ -46,6 +45,10 @@ jobs:
       - name: Update data from VERA
         run: |
           Rscript R/update_data.R
+
+      - name: Set Python path for reticulate
+        run: |
+          echo "RETICULATE_PYTHON=$(which python3)" >> $GITHUB_ENV
 
       - name: Run forecast
         run: |
