@@ -21,7 +21,7 @@ jobs:
           Rscript -e "install.packages(c('forecast', 'ranger', 'readr', 'dplyr', 'tidyr', 'httr', 'jsonlite'), repos='https://cran.rstudio.com/')"
           Rscript -e "install.packages('reticulate', repos='https://cran.rstudio.com/')"
           Rscript -e "library(reticulate)"
-          
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -30,6 +30,11 @@ jobs:
       - name: Install Python packages
         run: |
           pip install timesfm torch
+
+      - name: Install R packages
+        run: |
+          Rscript -e "install.packages(c('forecast', 'ranger', 'readr', 'dplyr', 'tidyr', 'reticulate'), repos='https://cran.rstudio.com/')"
+          Rscript -e "reticulate::use_python(Sys.which('python3'))"
 
       - name: Cache TimesFM model
         uses: actions/cache@v3
