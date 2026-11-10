@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-    contents: write
+  contents: write
 
 jobs:
   forecast:
@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -53,6 +55,14 @@ jobs:
         run: |
           echo "RETICULATE_PYTHON=$(which python3)" >> $GITHUB_ENV
 
+      - name: Run evaluate
+        run: |
+          Rscript R/fm.R evaluate \
+            --data chla_daily.csv \
+            --models persistence arima rf timesfm chronos ens3 \
+            --stride 3 \
+            --out results_all5
+
       - name: Run forecast
         run: |
           Rscript R/fm.R forecast \
@@ -64,6 +74,6 @@ jobs:
         run: |
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Actions"
-          git add chla_daily.csv forecasts/
+          git add chla_daily.csv forecasts/ results_all5/
           git commit -m "auto forecast $(date +'%Y-%m-%d')" || echo "No changes"
           git push
