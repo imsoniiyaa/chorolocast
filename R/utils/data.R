@@ -60,7 +60,7 @@ inv <- function(x, log) pmax(if (log) expm1(x) else x, 0)
 # make a context vector for a given origin date, or return NULL if not enough data
 
 make_context <- function(series, origin, ctx_len, log,
-                         max_stale = 7, min_obs = 30) {
+                         max_stale = 60, min_obs = 30) {
     i <- match(origin, series$date)
 
     if (is.na(i)) {
