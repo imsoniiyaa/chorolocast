@@ -25,7 +25,7 @@ jobs:
 
       - name: Install Python packages
         run: |
-          pip install timesfm torch
+          pip install timesfm torch "chronos-forecasting"
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
