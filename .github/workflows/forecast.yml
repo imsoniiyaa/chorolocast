@@ -68,6 +68,7 @@ jobs:
           Rscript R/fm.R forecast \
             --data chla_daily.csv \
             --model ens3 \
+            --max_stale 60 \
             --out forecasts
 
       - name: Commit and push
