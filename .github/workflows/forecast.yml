@@ -51,17 +51,6 @@ jobs:
         run: |
           Rscript R/update_data.R
 
-      - name: Set Python path for reticulate
-        run: |
-          echo "RETICULATE_PYTHON=$(which python3)" >> $GITHUB_ENV
-
-      - name: Run evaluate
-        run: |
-          Rscript R/fm.R evaluate \
-            --data chla_daily.csv \
-            --models persistence arima rf timesfm chronos ens3 \
-            --stride 3 \
-            --out results_all5
       - name: Check data dates
         run: |
           Rscript -e "
@@ -73,13 +62,17 @@ jobs:
           cat('Lag:', as.numeric(Sys.Date() - max(df\$date, na.rm=TRUE)), 'days\n')
           "
 
-      - name: Run forecast
+      - name: Set Python path for reticulate
         run: |
-          Rscript R/fm.R forecast \
+          echo "RETICULATE_PYTHON=$(which python3)" >> $GITHUB_ENV
+
+      - name: Run evaluate
+        run: |
+          Rscript R/fm.R evaluate \
             --data chla_daily.csv \
-            --model ens3 \
-            --max_stale 60 \
-            --out forecasts
+            --models persistence arima rf timesfm chronos ens3 \
+            --stride 3 \
+            --out results_all5
 
       - name: Run forecast
         run: |
