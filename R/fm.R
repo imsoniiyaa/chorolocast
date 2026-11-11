@@ -104,7 +104,7 @@ main <- function(argv = commandArgs(trailingOnly = TRUE)) {
     a <- with_defaults(
       p$a,
       c(common, list(
-        max_stale = 7,
+        max_stale = 60,
         out = "forecasts"
       ))
     )
@@ -131,7 +131,7 @@ main <- function(argv = commandArgs(trailingOnly = TRUE)) {
     )
   }
 
-    cmd_forecast(a)
-  }
+  cmd_forecast(a)
+}
 
-if (!interactive() && sys.nframe() == 0) main() 
+if (!interactive() && sys.nframe() == 0) main()
