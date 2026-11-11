@@ -62,6 +62,24 @@ jobs:
             --models persistence arima rf timesfm chronos ens3 \
             --stride 3 \
             --out results_all5
+      - name: Check data dates
+        run: |
+          Rscript -e "
+          library(readr)
+          df <- read_csv('chla_daily.csv', show_col_types = FALSE)
+          df\$date <- as.Date(df\$date)
+          cat('Last date:', as.character(max(df\$date, na.rm=TRUE)), '\n')
+          cat('Today:', as.character(Sys.Date()), '\n')
+          cat('Lag:', as.numeric(Sys.Date() - max(df\$date, na.rm=TRUE)), 'days\n')
+          "
+
+      - name: Run forecast
+        run: |
+          Rscript R/fm.R forecast \
+            --data chla_daily.csv \
+            --model ens3 \
+            --max_stale 60 \
+            --out forecasts
 
       - name: Run forecast
         run: |
