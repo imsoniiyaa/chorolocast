@@ -114,11 +114,13 @@ server <- function(input, output) {
 
   output$crps_plot <- renderPlotly({
     df <- metrics() %>%
-      filter(split == "test", variant == "calibrated") %>%
+      filter(split == "test") %>%
+      filter((model != "ens4" & variant == "calibrated") | (model == "ens4" & variant == "raw")) %>%
       mutate(
         model = factor(model, levels = model[order(CRPS, decreasing = TRUE)]),
         color = case_when(
           model == "ens3" ~ colors$foundation,
+          model == "ens4" ~ "#74C69D", # ens4 색상 추가
           model %in% c("timesfm", "chronos") ~ colors$primary,
           model == "persistence" ~ colors$gray,
           TRUE ~ colors$secondary
