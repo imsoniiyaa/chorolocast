@@ -89,10 +89,8 @@ jobs:
           Rscript /tmp/check.R
       - name: Run forecast
         run: |
-          Rscript R/fm.R forecast \
+          python py/ens4.py forecast \
             --data chla_daily.csv \
-            --model ens3 \
-            --max_stale 60 \
             --out forecasts
 
       - name: Commit and push
