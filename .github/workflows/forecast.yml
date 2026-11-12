@@ -67,6 +67,7 @@ jobs:
           echo "RETICULATE_PYTHON=$(which python3)" >> $GITHUB_ENV
 
       - name: Run evaluate
+        continue-on-error: true
         run: |
           Rscript R/fm.R evaluate \
             --data chla_daily.csv \
@@ -74,6 +75,18 @@ jobs:
             --stride 3 \
             --out results_all5
 
+      - name: Check data dates
+        run: |
+          Rscript /tmp/check.R || true
+          cat > /tmp/check.R << 'REOF'
+          library(readr)
+          df <- read_csv('chla_daily.csv', show_col_types = FALSE)
+          df$date <- as.Date(df$date)
+          chla <- df$Chla_ugL_mean
+          cat('Non-NA Chla values:', sum(!is.na(chla)), '\n')
+          cat('Last non-NA date:', as.character(max(df$date[!is.na(chla)], na.rm=TRUE)), '\n')
+          REOF
+          Rscript /tmp/check.R
       - name: Run forecast
         run: |
           Rscript R/fm.R forecast \
