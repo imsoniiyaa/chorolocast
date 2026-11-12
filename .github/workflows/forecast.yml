@@ -97,6 +97,7 @@ jobs:
         run: |
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Actions"
+          git pull --rebase origin main
           git add chla_daily.csv forecasts/ results_all5/
           git commit -m "auto forecast $(date +'%Y-%m-%d')" || echo "No changes"
           git push
