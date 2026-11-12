@@ -21,11 +21,11 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install Python packages
         run: |
-         pip install scipy numpy pandas "timesfm==2.0.2" "torch==2.15.0" "chronos-forecasting==2.3.2"
+         pip install scipy numpy pandas "timesfm==2.0.2" "chronos-forecasting==2.3.2" torch
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
