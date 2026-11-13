@@ -60,33 +60,6 @@ Chlorocast is an ensemble forecasting system for chlorophyll-a (Chla) concentrat
 
 ---
 
-## Repository Structure
-
-chlorocast/
-├── R/
-│ ├── fm.R # Main R forecasting script (evaluate + forecast)
-│ ├── update_data.R # Fetches latest VERA data
-│ └── utils/
-│ └── data.R # Data loading utilities
-├── py/
-│ ├── ens4.py # Python ensemble (ChloroFM + TimesFM)
-│ ├── chlorofm.py # ChloroFM model
-│ ├── fm_backend.py # TimesFM/Chronos backend
-│ └── ...
-├── config/
-│ └── chlorofm.json # Model configuration
-├── shiny_app/
-│ └── app.R # Shiny dashboard
-├── forecasts/
-│ └── chlorocast_ens3.csv # Latest forecast output
-├── results_all5/
-│ ├── metrics_overall.csv # Model evaluation results
-│ └── metrics_by_horizon.csv
-└── .github/workflows/
-└── forecast.yml # Daily automation
-
----
-
 ## Quickstart
 
 ### R (ens3)
