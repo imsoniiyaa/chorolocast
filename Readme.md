@@ -13,18 +13,6 @@ Chlorocast is an ensemble forecasting system for chlorophyll-a (Chla) concentrat
 
 ---
 
-## Team
-
-| Name | Role |
-|------|------|
-| Sophia (Soeun) Jang | Modeling, Python pipeline, Dashboard |
-| Nicholas Reaux | R modeling, Evaluation |
-| Eric (Boyuan) Zhao | Data pipeline, GitHub Actions |
-
-**Client:** Dr. Sarah Bogen, Center for Ecosystem Forecasting, Virginia Tech
-
----
-
 ## Dashboard
 
 🔗 [https://chorolocast.shinyapps.io/shiny_app/](https://chorolocast.shinyapps.io/shiny_app/)
@@ -37,14 +25,14 @@ Chlorocast is an ensemble forecasting system for chlorophyll-a (Chla) concentrat
 
 ## Models
 
-| Model | Description | Test CRPS |
-|-------|-------------|-----------|
-| Persistence | Baseline: last observed value | 10.271 |
-| ARIMA | Statistical time series | 8.941 |
-| Random Forest | ML with lagged features | 10.936 |
-| TimesFM | Google foundation model (zero-shot) | 7.942 |
-| Chronos | Amazon foundation model (zero-shot) | 8.679 |
-| **ens3** | **ARIMA + RF + TimesFM ensemble (calibrated)** | **6.383** |
+| Model         | Description                                    | Test CRPS |
+| ------------- | ---------------------------------------------- | --------- |
+| Persistence   | Baseline: last observed value                  | 10.271    |
+| ARIMA         | Statistical time series                        | 8.941     |
+| Random Forest | ML with lagged features                        | 10.936    |
+| TimesFM       | Google foundation model (zero-shot)            | 7.942     |
+| Chronos       | Amazon foundation model (zero-shot)            | 8.679     |
+| **ens3**      | **ARIMA + RF + TimesFM ensemble (calibrated)** | **6.383** |
 
 **ens3** is the best-performing model, combining classical and foundation model forecasts with post-hoc calibration (coverage95 = 94.4%).
 
@@ -53,23 +41,27 @@ Chlorocast is an ensemble forecasting system for chlorophyll-a (Chla) concentrat
 ## Methods
 
 ### Data
+
 - Source: [VERA4cast](https://amnh1.osn.mghpcc.org/bio230121-bucket01/vera4cast/) — daily in-situ sensor data
 - Target: `Chla_ugL_mean` (chlorophyll-a, μg/L)
 - Period: 2013–present, Falling Creek Reservoir
 - Features: water temp, DO, fDOM, turbidity, air temp, PAR, wind, rain, inflow
 
 ### Evaluation
+
 - Metric: **CRPS** (Continuous Ranked Probability Score) — lower is better
 - Train/Val/Test split with stride-3 rolling window
 - Calibration via isotonic regression on validation set
 
 ### Automation
+
 - GitHub Actions runs daily at midnight UTC
 - Fetches latest VERA data → runs ens3 forecast → pushes to GitHub → Shiny app auto-updates
 
 ---
 
 ## Repository Structure
+
 chlorocast/
 ├── R/
 │ ├── fm.R # Main R forecasting script (evaluate + forecast)
@@ -93,12 +85,12 @@ chlorocast/
 └── .github/workflows/
 └── forecast.yml # Daily automation
 
-
 ---
 
 ## Quickstart
 
 ### R (ens3)
+
 ```bash
 Rscript R/fm.R forecast \
   --data chla_daily.csv \
@@ -107,6 +99,7 @@ Rscript R/fm.R forecast \
 ```
 
 ### Python (ens4)
+
 ```bash
 # Requires Python 3.12, timesfm==2.0.2
 python py/ens4.py forecast \
@@ -118,11 +111,11 @@ python py/ens4.py forecast \
 
 ## Results
 
-| Split | Model | CRPS | Coverage95 |
-|-------|-------|------|------------|
-| Val | ens3 | 5.807 | 90.3% |
-| Test (raw) | ens3 | 7.782 | 89.7% |
-| Test (calibrated) | **ens3** | **6.383** | **94.4%** |
+| Split             | Model    | CRPS      | Coverage95 |
+| ----------------- | -------- | --------- | ---------- |
+| Val               | ens3     | 5.807     | 90.3%      |
+| Test (raw)        | ens3     | 7.782     | 89.7%      |
+| Test (calibrated) | **ens3** | **6.383** | **94.4%**  |
 
 ---
 
