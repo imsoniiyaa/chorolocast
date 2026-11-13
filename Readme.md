@@ -44,7 +44,7 @@ Chlorocast is an ensemble forecasting system for chlorophyll-a (Chla) concentrat
 
 - Source: VERA Forecast — daily in-situ sensor data
 - Target: `Chla_ugL_mean` (chlorophyll-a, μg/L)
-- Period: 2013–present, Falling Creek Reservoir
+- Period: 6-years of data, Falling Creek Reservoir
 - Features: water temp, DO, fDOM, turbidity, air temp, PAR, wind, rain, inflow
 
 ### Evaluation
