@@ -59,7 +59,7 @@ ui <- fluidPage(
 
   # 상단 stat boxes
   fluidRow(
-    column(3, div(class = "stat-box", h3("7.853"), p("Best CRPS (ens3)"))),
+    column(3, div(class = "stat-box", h3(textOutput("best_crps")), p("Best CRPS (ens3)"))),
     column(3, div(class = "stat-box", h3("2,455"), p("Daily Records"))),
     column(3, div(class = "stat-box", h3("35"), p("Days Forecast Horizon"))),
     column(3, div(class = "stat-box", h3("6"), p("Models Evaluated")))
@@ -112,10 +112,15 @@ server <- function(input, output) {
     read_csv(paste0(base_url, "forecasts/chlorocast_ens3.csv"), show_col_types = FALSE)
   })
 
+  output$best_crps <- renderText({
+    df <- metrics() %>%
+      filter(split == "test", variant == "calibrated", model == "ens3")
+    round(df$CRPS[1], 3)
+  })
+
   output$crps_plot <- renderPlotly({
     df <- metrics() %>%
-      filter(split == "test") %>%
-      filter((model != "ens4" & variant == "calibrated") | (model == "ens4" & variant == "raw")) %>%
+      filter(split == "test", variant == "calibrated") %>%
       mutate(
         model = factor(model, levels = model[order(CRPS, decreasing = TRUE)]),
         color = case_when(
