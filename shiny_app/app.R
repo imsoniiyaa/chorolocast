@@ -137,7 +137,7 @@ server <- function(input, output) {
         linetype = "dashed", color = "gray50"
       ) +
       scale_fill_manual(values = setNames(df$color, df$model)) +
-      xlim(0, 13) +
+      xlim(0, 15) +
       labs(x = "CRPS", y = NULL) +
       theme_minimal(base_size = 13) +
       theme(
