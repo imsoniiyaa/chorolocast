@@ -1,0 +1,19 @@
+{
+  "model": "ens4",
+  "members": 199,
+  "data_sha256": "10919531656b4fbe2e646bd239d167537d4cd2a910525ecbe494d585d240b5e2",
+  "periods": {
+    "val": {
+      "first_origin": "2025-01-01",
+      "last_origin": "2025-11-24",
+      "origins": 110
+    },
+    "test": {
+      "first_origin": "2026-01-01",
+      "last_origin": "2026-08-14",
+      "origins": 76
+    }
+  },
+  "evaluation_type": "development backtest; prior architecture selection used 2026",
+  "calibration": "none; exact fixed raw-sample consensus"
+}
