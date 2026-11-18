@@ -88,18 +88,6 @@ ui <- fluidPage(
       12,
       div(
         class = "card",
-        h3("Ensemble Forecast (ens3)"),
-        p("Shaded area = 90% prediction interval", style = "color:gray; margin-top:-10px;"),
-        plotlyOutput("forecast_plot", height = "400px")
-      )
-    )
-  ),
-
-  fluidRow(
-    column(
-      12,
-      div(
-        class = "card",
         h3("Model Forecast Comparison"),
         p("Median forecast for each model", style = "color:gray; margin-top:-10px;"),
         plotlyOutput("all_models_plot", height = "400px")
