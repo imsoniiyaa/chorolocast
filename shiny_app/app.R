@@ -100,6 +100,35 @@ ui <- fluidPage(
     )
   )
 )
+  # Model comparison forecast
+  fluidRow(
+    column(
+      12,
+      div(
+        class = "card",
+        h3("Model Forecast Comparison"),
+        p("Median forecast for each model", style = "color:gray; margin-top:-10px;"),
+        plotlyOutput("all_models_plot", height = "400px")
+      )
+    )
+  ),
+
+  # Individual model forecast
+  fluidRow(
+    column(
+      12,
+      div(
+        class = "card",
+        h3("Individual Model Forecast"),
+        p("Shaded area = 90% prediction interval", style = "color:gray; margin-top:-10px;"),
+        selectInput("selected_model", "Select Model:",
+          choices = c("ens3", "arima", "chronos", "rf", "timesfm"),
+          selected = "ens3"
+        ),
+        plotlyOutput("single_model_plot", height = "400px")
+      )
+    )
+  )
 
 server <- function(input, output) {
   metrics <- reactive({
@@ -210,6 +239,87 @@ server <- function(input, output) {
         legend = list(orientation = "h")
       )
   })
+    # 모든 모델 forecast CSV 로드
+    all_forecasts <- reactive({
+      models <- c("ens3", "arima", "chronos", "rf", "timesfm")
+      dfs <- lapply(models, function(m) {
+        df <- read_csv(paste0(base_url, "forecasts/chlorocast_", m, ".csv"),
+          show_col_types = FALSE
+        )
+        df %>%
+          filter(parameter == 100) %>%
+          mutate(datetime = as.Date(datetime), model = m)
+      })
+      bind_rows(dfs)
+    })
+
+    output$all_models_plot <- renderPlotly({
+      df <- all_forecasts()
+
+      p <- ggplot(df, aes(
+        x = datetime, y = prediction, color = model, group = model,
+        text = paste0(
+          "Model: ", model, "<br>Date: ", datetime,
+          "<br>Chla: ", round(prediction, 2), " μg/L"
+        )
+      )) +
+        geom_line(linewidth = 1) +
+        scale_color_manual(values = c(
+          "ens3" = colors$foundation,
+          "arima" = colors$accent,
+          "rf" = colors$secondary,
+          "timesfm" = colors$primary,
+          "chronos" = "#74C69D"
+        )) +
+        labs(x = "Date", y = "Chlorophyll-a (μg/L)", color = "Model") +
+        theme_minimal(base_size = 13) +
+        theme(
+          panel.background = element_rect(fill = "white", color = NA),
+          plot.background = element_rect(fill = "white", color = NA)
+        )
+
+      ggplotly(p, tooltip = "text")
+    })
+
+    output$single_model_plot <- renderPlotly({
+      m <- input$selected_model
+      df <- read_csv(paste0(base_url, "forecasts/chlorocast_", m, ".csv"),
+        show_col_types = FALSE
+      ) %>%
+        filter(parameter %in% c(10, 100, 190)) %>%
+        mutate(datetime = as.Date(datetime)) %>%
+        pivot_wider(names_from = parameter, values_from = prediction) %>%
+        rename(lo = `10`, mid = `100`, hi = `190`)
+
+      model_color <- switch(m,
+        "ens3" = colors$foundation,
+        "arima" = colors$accent,
+        "rf" = colors$secondary,
+        "timesfm" = colors$primary,
+        "chronos" = "#74C69D"
+      )
+
+      plot_ly(df, x = ~datetime) %>%
+        add_ribbons(
+          ymin = ~lo, ymax = ~hi,
+          fillcolor = "rgba(82, 183, 136, 0.2)",
+          line = list(color = "transparent"),
+          name = "90% Interval"
+        ) %>%
+        add_lines(
+          y = ~mid,
+          line = list(color = model_color, width = 2),
+          name = paste("Forecast (median) —", toupper(m)),
+          hovertemplate = "Date: %{x}<br>Chla: %{y:.2f} μg/L<extra></extra>"
+        ) %>%
+        layout(
+          xaxis = list(title = "Date"),
+          yaxis = list(title = "Chlorophyll-a (μg/L)"),
+          paper_bgcolor = "white",
+          plot_bgcolor = "white",
+          legend = list(orientation = "h")
+        )
+    })
 }
 
 shinyApp(ui = ui, server = server)
