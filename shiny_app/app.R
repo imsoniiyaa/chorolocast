@@ -111,7 +111,7 @@ ui <- fluidPage(
         plotlyOutput("all_models_plot", height = "400px")
       )
     )
-  ),
+  )
 
   # Individual model forecast
   fluidRow(
