@@ -1,7 +1,7 @@
 "model","load_s","per_35day_forecast_s"
-"persistence",0.01,0.002
-"arima",0.66,0.914
-"rf",0.01,1.626
-"timesfm",1.37,0.521
-"chronos",8.87,0.061
-"ens3",0.01,3.137
+"persistence",0.02,0.003
+"arima",0.86,0.93
+"rf",0.02,2.199
+"timesfm",1.51,0.574
+"chronos",7.08,0.079
+"ens3",0.01,3.793
